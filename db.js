@@ -6,16 +6,6 @@ var bytewise = require('bytewise')
 
 var PREFIX = "user:"
 
-// Turn an email into a key
-function k(email) {
-  return bytewise.encode([PREFIX, email]);
-}
-
-// Turn a key into an email
-function dk(k) {
-  return bytewise.decode(k)[1]
-}
-
 function genTimestamp(dt) {
   var d = dt || new Date()
 
@@ -60,12 +50,27 @@ module.exports = function(db) {
   if (typeof db === 'string') {
     name = db
   }
+
   if (!db || typeof db === 'string') {
     db = levelup(name, {
       keyEncoding: 'binary',
       valueEncoding: 'json'
     })
   }
+  //
+  // Turn an email into a key
+  function k(email) {
+    if (db.sublevel) return email;
+
+    return bytewise.encode([PREFIX, email]);
+  }
+
+  // Turn a key into an email
+  function dk(k) {
+    if (db.sublevel) return k;
+    return bytewise.decode(k)[1]
+  }
+
 
   // Set up the write queue with concurrency of 1.
   // This serializes write-after-read operations.
